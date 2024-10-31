@@ -24,11 +24,11 @@ def save_donations():
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('index.html')  # No total_donations variable here
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    return render_template('about.html')  # No total_donations variable here
 
 @app.route('/donate', methods=['GET', 'POST'])
 def donate():
@@ -41,7 +41,7 @@ def donate():
             return jsonify({'total_donations': total_donations})
         else:
             return jsonify({'error': 'Invalid donation amount'}), 400
-    return render_template('donate.html')
+    return render_template('donate.html', total_donations=total_donations)  # Pass the variable here
 
 @app.route('/total')
 def total():
