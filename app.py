@@ -1,6 +1,6 @@
-import os
 from flask import Flask, render_template, request, jsonify
 import json
+import os
 
 app = Flask(__name__)
 
@@ -48,6 +48,6 @@ def total():
     return jsonify({'total_donations': total_donations})
 
 if __name__ == '__main__':
-    load_donations()  # Load donations at startup
-    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable or default to 5000
-    app.run(host='0.0.0.0', port=port)  # Listen on all interfaces and the specified port
+    load_donations()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
