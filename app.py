@@ -1,55 +1,53 @@
+import os
 from flask import Flask, render_template, request, jsonify
 import json
-import os
 
 app = Flask(__name__)
 
-DATA_FILE_PATH = 'data.json'
+# Initialize total donations
+total_donations = 0
 
-# Function to read the total amount raised from a JSON file
-def read_total_amount():
-    if os.path.exists(DATA_FILE_PATH):
-        with open(DATA_FILE_PATH, 'r') as file:
+# Load donations from a file if it exists
+def load_donations():
+    global total_donations
+    try:
+        with open('data.json', 'r') as file:
             data = json.load(file)
-            return data.get("totalAmount", 0)
-    return 0
+            total_donations = data.get('total_donations', 0)
+    except FileNotFoundError:
+        total_donations = 0
 
-# Function to write the total amount raised to a JSON file
-def write_total_amount(amount):
-    with open(DATA_FILE_PATH, 'w') as file:
-        json.dump({"totalAmount": amount}, file)
-
-# Initialize the total amount raised
-total_amount = read_total_amount()
+# Save donations to a file
+def save_donations():
+    with open('data.json', 'w') as file:
+        json.dump({'total_donations': total_donations}, file)
 
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
-@app.route('/donate')
+@app.route('/donate', methods=['GET', 'POST'])
 def donate():
+    global total_donations
+    if request.method == 'POST':
+        amount = request.form.get('amount', type=int)
+        if amount and 0 < amount <= 500:  # Max donation is 500
+            total_donations += amount
+            save_donations()
+            return jsonify({'total_donations': total_donations})
+        else:
+            return jsonify({'error': 'Invalid donation amount'}), 400
     return render_template('donate.html')
 
-@app.route('/api/donation', methods=['GET'])
-def get_donation():
-    return jsonify({"totalAmount": total_amount})
-
-@app.route('/api/donation', methods=['POST'])
-def add_donation():
-    global total_amount
-    data = request.get_json()
-    amount = data.get("amount", 0)
-
-    if isinstance(amount, (int, float)) and amount > 0:
-        total_amount += amount
-        write_total_amount(total_amount)
-        return jsonify({"totalAmount": total_amount}), 200
-    else:
-        return jsonify({"error": "Invalid donation amount"}), 400
+@app.route('/total')
+def total():
+    return jsonify({'total_donations': total_donations})
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    load_donations()  # Load donations at startup
+    port = int(os.environ.get("PORT", 5000))  # Use the PORT environment variable or default to 5000
+    app.run(host='0.0.0.0', port=port)  # Listen on all interfaces and the specified port
